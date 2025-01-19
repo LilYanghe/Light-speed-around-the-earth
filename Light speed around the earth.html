@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animación: Luz alrededor de la Tierra</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="orbitCanvas"></canvas>
+
+    <script>
+        // Configuración inicial
+        const canvas = document.getElementById('orbitCanvas');
+        const ctx = canvas.getContext('2d');
+        const scale = window.devicePixelRatio; // Obtener la escala del dispositivo
+        canvas.width = window.innerWidth * scale;
+        canvas.height = window.innerHeight * scale;
+        ctx.scale(scale, scale); // Escalar el contexto para pantallas de alta resolución
+        ctx.imageSmoothingEnabled = false; // Desactiva el suavizado de imágenes
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Ajustes solicitados
+        const orbitRadius = 280; // Radio de la órbita
+        const lightRadius = 20; // Radio de la bola de luz
+        const planetRadius = 280; // Radio de la Tierra (planeta)
+        
+        const lightSpeed = 7.46; // Vueltas por segundo (simular velocidad de la luz)
+        const angularSpeed = 2 * Math.PI * lightSpeed; // Velocidad angular (radianes por segundo)
+        let angle = 0; // Ángulo inicial
+
+        let lastTime = 0; // Tiempo del cuadro anterior
+
+        // Cargar imagen del espacio como fondo
+        const spaceImg = new Image();
+        spaceImg.src = "https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg";
+
+        // Cargar imagen de la Tierra
+        const earthImg = new Image();
+        earthImg.src = "https://upload.wikimedia.org/wikipedia/commons/2/22/Earth_Western_Hemisphere_transparent_background.png";
+
+        // Asegurarse de que ambas imágenes se carguen antes de iniciar la animación
+        let imagesLoaded = false;
+
+        function checkImagesLoaded() {
+            if (spaceImg.complete && earthImg.complete) {
+                imagesLoaded = true;
+                requestAnimationFrame(draw); // Iniciar animación cuando las imágenes estén listas
+            } else {
+                requestAnimationFrame(checkImagesLoaded); // Seguir comprobando hasta que las imágenes se carguen
+            }
+        }
+
+        // Dibujar el planeta con textura
+        function drawPlanet() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, planetRadius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(
+                earthImg,
+                centerX - planetRadius, // Ajustar posición
+                centerY - planetRadius,
+                planetRadius * 2, // Ajustar tamaño
+                planetRadius * 2
+            );
+            ctx.restore();
+        }
+
+        // Función para dibujar
+        function draw(currentTime) {
+            if (!imagesLoaded) return; // Solo dibujar si las imágenes están cargadas
+
+            // Calcular el tiempo transcurrido desde el último cuadro
+            const deltaTime = (currentTime - lastTime) / 1000; // Convertir a segundos
+            lastTime = currentTime;
+
+            // Dibujar el fondo (ajustar al tamaño del lienzo)
+            ctx.drawImage(spaceImg, 0, 0, canvas.width, canvas.height);
+
+            // Dibujar el planeta
+            drawPlanet();
+
+            // Calcular la posición de la bola de luz
+            angle += angularSpeed * deltaTime; // Usar el tiempo real transcurrido
+            const lightX = centerX + orbitRadius * Math.cos(angle);
+            const lightY = centerY + orbitRadius * Math.sin(angle);
+
+            // Dibujar la bola de luz
+            ctx.beginPath();
+            const gradient = ctx.createRadialGradient(lightX, lightY, 0, lightX, lightY, lightRadius);
+            gradient.addColorStop(0, "yellow");
+            gradient.addColorStop(1, "rgba(255, 255, 0, 0)");
+            ctx.fillStyle = gradient;
+            ctx.arc(lightX, lightY, lightRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Repetir la animación
+            requestAnimationFrame(draw);
+        }
+
+        // Iniciar la comprobación de la carga de imágenes
+        checkImagesLoaded();
+    </script>
+</body>
+</html>
